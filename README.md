@@ -35,4 +35,4 @@ deleting the particular product from the table usind its id if pressent other wi
 • Listing all products in stock (GET).
 Retrieving all details which are pressent in the database
 
-• Listing all products in stock (GET). Retrieving all details from the table if pressent.
+
