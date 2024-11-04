@@ -3,14 +3,19 @@ package com.example.Product.Inventory.controller;
 import com.example.Product.Inventory.Repository.ProductRepository;
 import com.example.Product.Inventory.dto.Requestdto;
 import com.example.Product.Inventory.dto.Responsedto;
-import com.example.Product.Inventory.entity.ProductInventory;
+import com.example.Product.Inventory.entity.Product;
 import com.example.Product.Inventory.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.data.domain.Pageable;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
-import java.util.Map;
+
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 
 @RestController
@@ -29,8 +34,8 @@ public class ProductController {
     }
 
     @GetMapping("/Getall")
-    public ResponseEntity<List<ProductInventory>> getAllEmployees() {
-        List<ProductInventory> product = productService.getAllProduct();
+    public ResponseEntity<List<Product>> getAllEmployees() {
+        List<Product> product = productService.getAllProduct();
         return ResponseEntity.ok(product);
     }
 
@@ -39,15 +44,31 @@ public class ProductController {
         return productService.getProductById(id);
     }
 
-    @PutMapping("/Quantity_update/{id}")
-    public ResponseEntity<Responsedto> updateProductQuantity(@PathVariable Long id,@RequestBody Map<String, Integer> request) {
-        Responsedto response = productService.updateProduct(id, request.get("quantityInStock"));
-        return ResponseEntity.ok(response);
-    }
+@PutMapping("/update/{id}")
+public ResponseEntity<String> updateProduct(
+        @PathVariable Long id,
+        @RequestBody Requestdto requestDto) {
+
+
+    productService.updateProduct(id, requestDto);
+
+    return ResponseEntity.ok("Product updated successfully.");
+}
 
     @DeleteMapping("/Delete/{id}")
     public ResponseEntity<Responsedto> deleteProduct(@PathVariable Long id) {
         Responsedto response = productService.deleteProduct(id);
         return ResponseEntity.ok(response);
+    }
+    @GetMapping("/search")
+    public ResponseEntity<List<Product>> searchProducts(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String category,
+            @RequestParam(defaultValue = "asc") String sort,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        List<Product> products = productService.searchProducts(name, category, sort, page, size);
+        return ResponseEntity.ok(products);
     }
 }

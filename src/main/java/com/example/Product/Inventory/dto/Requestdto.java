@@ -1,6 +1,6 @@
 package com.example.Product.Inventory.dto;
 
-import com.example.Product.Inventory.entity.ProductInventory;
+import com.example.Product.Inventory.entity.Product;
 import lombok.Data;
 
 @Data
@@ -11,9 +11,9 @@ public class Requestdto {
     private double price;
     private int quantityInStock;
 
-    public ProductInventory getproductdetails() {
+    public Product getproductdetails() {
 
-        ProductInventory productinventory = new ProductInventory();
+        Product productinventory = new Product();
         productinventory.setName(this.name);
         productinventory.setCategory(this.category);
         productinventory.setPrice(this.price);

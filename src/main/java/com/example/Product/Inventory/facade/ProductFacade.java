@@ -1,10 +1,13 @@
 package com.example.Product.Inventory.facade;
 
+import com.example.Product.Inventory.ProductDao.ProductDao;
 import com.example.Product.Inventory.dto.Requestdto;
 import com.example.Product.Inventory.dto.Responsedto;
-import com.example.Product.Inventory.entity.ProductInventory;
+import com.example.Product.Inventory.entity.Product;
 import com.example.Product.Inventory.Repository.ProductRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Component;
 import java.util.Optional;
 
@@ -14,6 +17,14 @@ public class ProductFacade {
     @Autowired
     private ProductRepository productRepository;
 
+
+  @Autowired private final ProductDao productDao;
+
+    public ProductFacade(ProductDao productDao) {
+        this.productDao = productDao;
+    }
+
+    @Transactional
     public Responsedto createProduct(Requestdto reqDto) {
         StringBuilder missingFields = new StringBuilder();
 
@@ -23,45 +34,71 @@ public class ProductFacade {
         if (reqDto.getCategory() == null || reqDto.getCategory().isEmpty()) {
             missingFields.append("Category, ");
         }
-        if ( reqDto.getPrice() <= 0) {
+        if (reqDto.getPrice() <= 0) {
             missingFields.append("Price, ");
         }
         if (reqDto.getQuantityInStock() <= 0) {
             missingFields.append("Quantity in stock, ");
         }
+
         if (missingFields.length() > 0) {
             String missingFieldsStr = missingFields.substring(0, missingFields.length() - 2);
             return new Responsedto("Missing or invalid fields - " + missingFieldsStr);
         }
-        ProductInventory newProduct = reqDto.getproductdetails();
-        productRepository.save(newProduct);
 
-        return new Responsedto("Product saved successfully");
-    }
+        Product newProduct = reqDto.getproductdetails();
+        boolean isSaved = productRepository.save(newProduct);
 
-
-    public Responsedto updateProduct(Long id, int quantityInStock) {
-        Optional<ProductInventory> existingProduct = productRepository.findById(id);
-        if (existingProduct.isPresent()) {
-            ProductInventory product = existingProduct.get();
-            product.setQuantityInStock(quantityInStock);
-            productRepository.save(product);
-            return new Responsedto("Product quantity updated successfully");
+        if (isSaved) {
+            return new Responsedto("Product saved successfully");
         } else {
+            return new Responsedto("Failed to save product");
+        }
+    }
+    public Responsedto updateProduct(Long id, Requestdto reqDto) {
+        try {
+            Optional<Product> existingProduct = Optional.ofNullable(productDao.findById(id));
+
+            if (existingProduct.isPresent()) {
+                Product product = existingProduct.get();
+
+                if (reqDto.getName() != null) {
+                    product.setName(reqDto.getName());
+                }
+                if (reqDto.getCategory() != null) {
+                    product.setCategory(reqDto.getCategory());
+                }
+                if (reqDto.getPrice() >= 0) {
+                    product.setPrice(reqDto.getPrice());
+                }
+                if (reqDto.getQuantityInStock() >= 0) {
+                    product.setQuantityInStock(reqDto.getQuantityInStock());
+                }
+
+                productDao.update(product);
+                return new Responsedto("Product updated successfully");
+
+            } else {
+                return new Responsedto("Product not found with ID " + id);
+            }
+
+        } catch (EmptyResultDataAccessException e) {
             return new Responsedto("Product not found with ID " + id);
+        } catch (Exception e) {
+            return new Responsedto("An error occurred while updating the product: " + e.getMessage());
         }
     }
 
 
-    public Responsedto deleteProduct(Long id) {
-        Optional<ProductInventory> product = productRepository.findById(id);
-        if (product.isPresent()) {
-            productRepository.deleteById(id);
-            return new Responsedto("Product deleted successfully");
-        } else {
-            return new Responsedto("Product not found with ID: " + id);
-        }
+@Transactional
+public Responsedto deleteProduct(Long id) {
+    boolean isDeleted = productRepository.deleteProduct(id);
+    if (isDeleted) {
+        return new Responsedto("Product deleted successfully");
+    } else {
+        return new Responsedto("Product not found with ID: " + id);
     }
+}
 }
 
 
